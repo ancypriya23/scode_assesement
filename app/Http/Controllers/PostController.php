@@ -67,7 +67,7 @@ class PostController extends Controller
             'image' => $filePath ?? null,
             'user_id' => 1,
         ]);
-dd('stored');
+        dd('stored');
         return redirect()->route('posts.show', $post->id)
                          ->with('success', 'Post created successfully!');
     }
