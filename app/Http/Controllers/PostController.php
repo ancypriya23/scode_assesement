@@ -7,6 +7,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;  // Correct import for the Request class
 
 class PostController extends Controller
 {
@@ -23,7 +24,7 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
+        return view('posts.create');
     }
 
     /**
@@ -40,6 +41,35 @@ class PostController extends Controller
         $post->user->notify(new PostCreated($post));
 
         return new PostResource($post);
+    }
+
+    public function storeManual(Request $request)
+    {
+        
+        // 1. Validate the request, including the image file
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:255',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max size: 2MB
+        ]);
+
+        // 2. Handle the file upload
+        if ($request->hasFile('image')) {
+            // Store the file in the 'public' disk (storage/app/public)
+            //$filePath = $request->file('image')->store('posts', 's3');
+            $filePath = $request->file('image')->store('posts', 'public');
+        }
+
+        // 3. Create the Post with the uploaded image's path
+        $post = Post::create([
+            'title' => $request->title,
+            'content' => $request->content,
+            'image' => $filePath ?? null,
+            'user_id' => 1,
+        ]);
+dd('stored');
+        return redirect()->route('posts.show', $post->id)
+                         ->with('success', 'Post created successfully!');
     }
 
     /**
@@ -76,4 +106,18 @@ class PostController extends Controller
         $post->delete();
         return response()->json('Post deleted successfully');
     }
+
+    public function destroyManual(Post $post)
+{
+    // Delete the image from the storage if it exists
+    if ($post->image) {
+        Storage::disk('public')->delete($post->image);
+    }
+
+    // Delete the post
+    $post->delete();
+
+    return redirect()->route('posts.index')
+                     ->with('success', 'Post and associated image deleted successfully!');
+}
 }
