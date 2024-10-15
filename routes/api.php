@@ -19,10 +19,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('register', [AuthController::class, 'register'])->name('register');
 
-Route::apiResource('posts', PostController::class);
+//Route::apiResource('posts', PostController::class);
 
-Route::prefix('v1')
-//    ->middleware('auth:sanctum')
+
+  Route::middleware('auth:sanctum')
     ->group(function () {
         Route::get('/user', function (Request $request) {
             return $request->user();
@@ -36,6 +36,8 @@ Route::prefix('v1')
             return response()->json(['message' => 'Authenticated']);
         });
 });
+
+
 
 Route::post('/user/preferences', [AuthController::class, 'updateNotificationPreferences']);
 
